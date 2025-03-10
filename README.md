@@ -3,5 +3,10 @@ PROJECT TITLE - Custom Shell (Command Line Interpreter)
 TEAM MEMEBERS:<br>
 TEAM MEMBER 1: -Ayush Panwar<br>
 TEAM MEMBER 2: Abhay Singh<br>
+<<<<<<< HEAD
 TEAM MEMBER 3: Ankit Rawat<br>
 TEAM MEMBER 4: -<br>
+=======
+TEAM MEMBER 3: -<br>
+TEAM MEMBER 4: -Pankaj Rawat<br>
+>>>>>>> 0c9384fbaa447a01998adb5056fe7489eb8affc8
