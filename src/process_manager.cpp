@@ -1,15 +1,14 @@
 #include <iostream>
 #include <vector>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <cstring>
+#include <windows.h>  // Windows API for process management
+#include <string>
 
 using namespace std;
 
 struct Job {
     int id;          // Job ID
-    pid_t pid;       // Process ID
+    HANDLE hProcess; // Windows process handle
+    DWORD pid;       // Process ID
     string command;  // Command string
     bool isRunning;  // Job status (running/stopped)
 };
@@ -19,8 +18,8 @@ vector<Job> jobList;
 int jobCounter = 1; // Keeps track of job numbers
 
 // Function to add a new job to jobList
-void addJob(pid_t pid, const string& command) {
-    Job newJob = {jobCounter++, pid, command, true}; // New job entry
+void addJob(HANDLE hProcess, DWORD pid, const string& command) {
+    Job newJob = {jobCounter++, hProcess, pid, command, true};
     jobList.push_back(newJob);
     cout << "[" << newJob.id << "] " << pid << " started in background\n";
 }
@@ -34,7 +33,7 @@ void listJobs() {
              << " Status: " << (job.isRunning ? "Running" : "Stopped") << endl;
     }
 }
-int main()
-{
+
+int main() {
     
 }
