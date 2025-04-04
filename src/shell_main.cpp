@@ -1,30 +1,47 @@
+#include "shell.h"  // Must be included
 #include <iostream>
 #include <string>
-#include <vector>  // Add this line
-#include "shell.h" // Create this file if missing
+#include <vector>
+#include <direct.h>
+#include <windows.h>
+using namespace std;
 
-// Forward declaration (add this)
-void execute_command(const std::vector<std::string>& args);
+// Add this external declaration
+extern vector<string> command_history;
 
 int main() {
-    std::string input;
-    std::vector<std::string> args;
+    string input;
+    vector<string> args;
+
+    cout << "Custom Shell (type 'help' for commands)\n";
 
     while (true) {
-        std::cout << "my-shell> ";
-        std::getline(std::cin, input);
+        char cwd[MAX_PATH];
+        if (_getcwd(cwd, MAX_PATH)) {
+            cout << "\n" << cwd << "> ";
+        } else {
+            cout << "\n> ";
+        }
+        
+        getline(cin, input);
 
+        if (input.empty()) continue;
         if (input == "exit") break;
 
+        // Simple space-based splitting
         args.clear();
-        size_t start = 0, end = 0;
-        while ((end = input.find(' ', start)) != std::string::npos) {
-            args.push_back(input.substr(start, end - start));
-            start = end + 1;
+        size_t pos = 0;
+        while ((pos = input.find(' ')) != string::npos) {
+            args.push_back(input.substr(0, pos));
+            input.erase(0, pos + 1);
         }
-        args.push_back(input.substr(start));
+        args.push_back(input);
 
-        execute_command(args);
+        // DEBUG: Print parsed command
+        cout << "DEBUG: Executing '" << args[0] << "' with " 
+             << args.size()-1 << " arguments\n";
+
+        execute_command(args);  // This must be uncommented
     }
     return 0;
 }
