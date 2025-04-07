@@ -3,101 +3,127 @@
 #include <fstream>
 #include <windows.h>
 #include <direct.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <cstdlib>
-
+#include <sstream>
+#include <csignal>
 using namespace std;
 
-vector<string> command_history;
+extern vector<string> command_history;
+
+void signal_handler(int signal) {
+    switch (signal) {
+        case SIGINT:
+            cout << "\nInterrupt received (Ctrl+C)\n";
+            break;
+    }
+}
+
+
+void execute_piped_command(const string& command) {
+    string temp = command;
+    size_t pipe_pos = temp.find('|');
+    if (pipe_pos == string::npos) return;
+
+    string first_cmd = temp.substr(0, pipe_pos);
+    string second_cmd = temp.substr(pipe_pos + 1);
+
+    string temp_file = "temp_output.txt";
+    first_cmd += " > " + temp_file;
+    system(first_cmd.c_str());
+
+    second_cmd += " < " + temp_file;
+    system(second_cmd.c_str());
+
+    remove(temp_file.c_str());
+}
+
+void handle_redirection_and_execute(const string& input) {
+    string command = input;
+    string in_file, out_file;
+    bool has_input = false, has_output = false;
+
+    size_t in_pos = command.find('<');
+    size_t out_pos = command.find('>');
+
+    if (in_pos != string::npos) {
+        has_input = true;
+        in_file = command.substr(in_pos + 1);
+        command = command.substr(0, in_pos);
+    }
+
+    if (out_pos != string::npos) {
+        has_output = true;
+        out_file = command.substr(out_pos + 1);
+        command = command.substr(0, out_pos);
+    }
+
+    stringstream cmd_stream;
+    if (has_input) {
+        cmd_stream << command << " < " << in_file;
+    }
+    if (has_output) {
+        cmd_stream << command << " > " << out_file;
+    }
+    if (!has_input && !has_output) {
+        cmd_stream << command;
+    }
+
+    system(cmd_stream.str().c_str());
+}
 
 void execute_command(const vector<string>& args) {
     if (args.empty()) return;
 
-    command_history.push_back(args[0]);
+    string full_command;
+    for (const auto& arg : args) full_command += arg + " ";
+    command_history.push_back(full_command);
 
-    string cmd = args[0];
+    if (full_command.find('|') != string::npos) {
+        execute_piped_command(full_command);
+        return;
+    }
 
-    if (cmd == "help") {
-        cout << "Basic Commands:\n";
-        cout << "  help               Show this help message\n";
-        cout << "  exit               Exit the shell\n";
-        cout << "  cd <dir>           Change directory\n";
-        cout << "  cls                Clear the screen\n";
-        cout << "  mkdir <dir>        Create a directory\n";
-        cout << "  rmdir <dir>        Remove a directory\n";
-        cout << "  echo <text>        Print text to the console\n";
-        cout << "  history            Show previously run commands\n";
+    if (full_command.find('<') != string::npos || full_command.find('>') != string::npos) {
+        handle_redirection_and_execute(full_command);
+        return;
+    }
 
-        cout << "\nAdvanced Commands:\n";
-        cout << "  run <program>      Run a program (e.g., notepad.exe)\n";
-        cout << "  time               Show current system time\n";
-        cout << "  date               Show current system date\n";
-        cout << "  open <file>        Open a file with its default program\n";
-        cout << "  find <word>        Search for a word in a file (interactive)\n";
-    } 
-    else if (cmd == "cd") {
-        if (args.size() < 2) cout << "Usage: cd <directory>\n";
-        else if (_chdir(args[1].c_str()) != 0) perror("cd failed");
-    } 
-    else if (cmd == "cls") {
-        system("cls");  // Windows-specific
+    if (args.back() == "&") {
+        cerr << "Background execution not supported on this build.\n";
+        return;
     }
-    else if (cmd == "mkdir") {
-        if (args.size() < 2) cout << "Usage: mkdir <dir>\n";
-        else if (_mkdir(args[1].c_str()) != 0) perror("mkdir failed");
-    }
-    else if (cmd == "rmdir") {
-        if (args.size() < 2) cout << "Usage: rmdir <dir>\n";
-        else if (_rmdir(args[1].c_str()) != 0) perror("rmdir failed");
-    }
-    else if (cmd == "echo") {
-        for (size_t i = 1; i < args.size(); ++i) cout << args[i] << " ";
-        cout << "\n";
-    }
-    else if (cmd == "history") {
-        for (size_t i = 0; i < command_history.size(); ++i)
-            cout << i + 1 << ": " << command_history[i] << "\n";
-    }
-    else if (cmd == "run") {
-        if (args.size() < 2) cout << "Usage: run <program>\n";
-        else system(args[1].c_str());
-    }
-    else if (cmd == "time") {
-        SYSTEMTIME t;
-        GetLocalTime(&t);
-        printf("Time: %02d:%02d:%02d\n", t.wHour, t.wMinute, t.wSecond);
-    }
-    else if (cmd == "date") {
-        SYSTEMTIME t;
-        GetLocalTime(&t);
-        printf("Date: %02d/%02d/%04d\n", t.wDay, t.wMonth, t.wYear);
-    }
-    else if (cmd == "open") {
-        if (args.size() < 2) cout << "Usage: open <file>\n";
-        else ShellExecuteA(NULL, "open", args[1].c_str(), NULL, NULL, SW_SHOWNORMAL);
-    }
-    else if (cmd == "find") {
+
+    //Custom command: delep<filename> (delete file if not in use)
+    if (args[0] == "delep") {
         if (args.size() < 2) {
-            cout << "Usage: find <word>\n";
-            return;
-        }
-        string filename, line;
-        cout << "Enter file name: ";
-        getline(cin, filename);
-        ifstream file(filename);
-        if (!file.is_open()) {
-            cout << "Could not open file.\n";
-            return;
-        }
-        int line_num = 1;
-        while (getline(file, line)) {
-            if (line.find(args[1]) != string::npos) {
-                cout << "Line " << line_num << ": " << line << "\n";
+            cerr << "Usage: delep <file>\n";
+        } else {
+            if (remove(args[1].c_str()) == 0) {
+                cout << "Deleted file: " << args[1] << endl;
+            } else {
+                cerr << "Error: Could not delete file (may be in use).\n";
             }
-            line_num++;
         }
-        file.close();
+        return;
     }
-    else {
-        cout << "Unknown command: " << cmd << "\n";
+
+    //Custom command:sb (show banner)
+    if (args[0] == "sb") {
+        cout << "\n==========================\n";
+        cout << " Welcome to Custom Shell \n";
+        cout << "==========================\n\n";
+        return;
     }
+
+    //If command not handled, fall back to system execution
+    system(full_command.c_str());
 }
+
+// Register signal handlers
+void init_signals() {
+    signal(SIGINT, signal_handler);
+}
+
+

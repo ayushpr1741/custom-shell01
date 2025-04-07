@@ -8,10 +8,14 @@ using namespace std;
 
 // Add this external declaration
 extern vector<string> command_history;
+extern void init_signals();
+extern void execute_command(const vector<string>& args);
 
 int main() {
     string input;
     vector<string> args;
+
+    init_signals(); //Initialize signal handlers
 
     cout << "Custom Shell (type 'help' for commands)\n";
 
@@ -22,13 +26,13 @@ int main() {
         } else {
             cout << "\n> ";
         }
-        
+
         getline(cin, input);
 
         if (input.empty()) continue;
         if (input == "exit") break;
 
-        // Simple space-based splitting
+        //Simple space based splitting
         args.clear();
         size_t pos = 0;
         while ((pos = input.find(' ')) != string::npos) {
@@ -37,11 +41,11 @@ int main() {
         }
         args.push_back(input);
 
-        // DEBUG: Print parsed command
+        //DEBUG:Print parsed command
         cout << "DEBUG: Executing '" << args[0] << "' with " 
              << args.size()-1 << " arguments\n";
 
-        execute_command(args);  // This must be uncommented
+        execute_command(args);  
     }
     return 0;
 }
