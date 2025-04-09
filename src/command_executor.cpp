@@ -13,11 +13,9 @@
 #include "shell.h" 
 using namespace std;
 
-// Command history storage
 vector<string> command_history;
 
-// Helper function to convert wide strings to narrow strings
-// Helper function implementation
+
 string wide_to_narrow(const wchar_t* wide) {
     std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
     return converter.to_bytes(wide);
@@ -27,12 +25,14 @@ void execute_command(const vector<string>& args);
 void print_help();
 
 void execute_command(const vector<string>& args) {
+ 
+    if (handle_alias_command(args)) return;
+
     if (args.empty()) return;
 
-    // Add command to history
     command_history.push_back(args[0]);
 
-    // Help command
+  
     if (args[0] == "help") {
         print_help();
     }
@@ -159,7 +159,7 @@ void execute_command(const vector<string>& args) {
         }
     }
 
-    // 🆕 Show file content (`cat`)
+    //Show file content (`cat`)
     else if (args[0] == "cat") {
         if (args.size() < 2) {
             cerr << "Error: cat requires a filename.\n";
@@ -177,7 +177,7 @@ void execute_command(const vector<string>& args) {
         }
     }
 
-    // 🆕 Copy file (`cp`)
+    //Copy file (`cp`)
     else if (args[0] == "cp") {
         if (args.size() < 3) {
             cerr << "Error: cp requires source and destination filenames.\n";
@@ -193,7 +193,7 @@ void execute_command(const vector<string>& args) {
         }
     }
 
-    // 🆕 Move file (`mv`)
+    //Move file (`mv`)
     else if (args[0] == "mv") {
         if (args.size() < 3) {
             cerr << "Error: mv requires source and destination filenames.\n";
