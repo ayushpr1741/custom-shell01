@@ -1,15 +1,17 @@
 #ifndef SHELL_H
 #define SHELL_H
 
-#include <vector>
 #include <string>
-using namespace std;
-// Command history storage
-extern std::vector<std::string> command_history;
+#include <vector>
+#include <csignal>
 
-// Function declarations
+void init_signals();
+bool handle_alias_command(const std::vector<std::string>& args);
 void execute_command(const std::vector<std::string>& args);
-void print_help();
-string wide_to_narrow(const wchar_t* wide);
+std::string get_input_with_features();
+std::string resolve_alias(const std::string& input);
+
+//external flag to detect Ctrl+C interrupt
+extern volatile sig_atomic_t interrupted;
 
 #endif
