@@ -72,37 +72,5 @@ void killJob(int jobId) {
     cout << "Error: Job ID not found.\n";
 }
 
-int main() {
-    STARTUPINFO si = { sizeof(si) };
-    PROCESS_INFORMATION pi;
-
-    
-    if (CreateProcess(NULL, (LPSTR)"notepad.exe", NULL, NULL, FALSE,
-                      CREATE_SUSPENDED, NULL, NULL, &si, &pi)) {
-        addJob(pi.hProcess, pi.dwProcessId, "notepad.exe");
-
-        
-        ResumeThread(pi.hThread);
-        CloseHandle(pi.hThread); 
-    } else {
-        cout << "Failed to start notepad.exe\n";
-        return 1;
-    }
-
-    Sleep(2000); 
-    listJobs(); 
-    Sleep(1000);
-    fg(1); 
-    Sleep(1000);
-
-    if (CreateProcess(NULL, (LPSTR)"notepad.exe", NULL, NULL, FALSE,
-                      0, NULL, NULL, &si, &pi)) {
-        addJob(pi.hProcess, pi.dwProcessId, "notepad.exe");
-    }
-
-    Sleep(2000);
-    listJobs(); 
-    killJob(2); 
-
-    return 0;
+int main(){
 }
