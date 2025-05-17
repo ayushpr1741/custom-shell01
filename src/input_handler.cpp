@@ -4,11 +4,11 @@
 #include <vector>
 #include <string>
 #include <conio.h>
-#include <filesystem>
 #include <algorithm>
+#include <direct.h>
+#include <io.h>
 
 using namespace std;
-namespace fs = std::filesystem;
 
 extern vector<string> command_history;
 extern string resolve_alias(const string& input);
@@ -22,15 +22,21 @@ void autocomplete(string& input) {
 
     vector<string> suggestions;
 
+    // Use Windows API to list directory contents
+    WIN32_FIND_DATA findFileData;
+    HANDLE hFind = FindFirstFile("*.*", &findFileData);
     
-    for (const auto& entry : fs::directory_iterator(".")) {
-        string name = entry.path().filename().string();
-        if (name.rfind(prefix, 0) == 0) {
-            suggestions.push_back(name);
-        }
+    if (hFind != INVALID_HANDLE_VALUE) {
+        do {
+            string name = findFileData.cFileName;
+            if (name != "." && name != ".." && name.rfind(prefix, 0) == 0) {
+                suggestions.push_back(name);
+            }
+        } while (FindNextFile(hFind, &findFileData));
+        FindClose(hFind);
     }
 
-    
+    // Add built-in commands
     vector<string> commands = {
         "help", "cd", "pwd", "clear", "history", "ls", "ll", "mkdir",
         "touch", "rm", "cat", "cp", "mv", "time", "exit"
@@ -44,7 +50,7 @@ void autocomplete(string& input) {
 
     if (!suggestions.empty()) {
         input = base + suggestions[0];
-        cout << "\r> " << input << string(50, ' ');
+        cout << "\r" << input << string(50, ' ');
     }
 }
 
@@ -52,7 +58,6 @@ string get_input_with_features() {
     string input;
     char ch;
 
-    cout << "> ";
     while (true) {
         ch = _getch();
         if (ch == '\r') {  //Enter
@@ -74,7 +79,7 @@ string get_input_with_features() {
 
                 if (history_index >= 0 && history_index < (int)command_history.size()) {
                     input = command_history[history_index];
-                    cout << "\r> " << input << string(50, ' ');
+                    cout << "\r" << input << string(50, ' ');
                 }
             } else if (ch == 80) { //Down arrow
                 if (!command_history.empty() && history_index < (int)command_history.size() - 1)
@@ -84,10 +89,10 @@ string get_input_with_features() {
 
                 if (history_index >= 0 && history_index < (int)command_history.size()) {
                     input = command_history[history_index];
-                    cout << "\r> " << input << string(50, ' ');
+                    cout << "\r" << input << string(50, ' ');
                 } else {
                     input.clear();
-                    cout << "\r> " << string(50, ' ');
+                    cout << "\r" << string(50, ' ');
                 }
             }
         } else if (ch == '\t') { //Tab

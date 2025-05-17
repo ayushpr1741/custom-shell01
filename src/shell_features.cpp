@@ -46,8 +46,8 @@ bool handle_alias_command(const vector<string>& args) {
     if (!full_command.empty()) full_command.pop_back(); 
 
     if (args.size() == 1) {
-        for (const auto& [key, value] : alias_map) {
-            cout << "alias " << key << "='" << value << "'\n";
+        for (const auto& pair : alias_map) {
+            cout << "alias " << pair.first << "='" << pair.second << "'\n";
         }
     } else {
         string rest = full_command.substr(6);
@@ -59,7 +59,6 @@ bool handle_alias_command(const vector<string>& args) {
 
         string key = rest.substr(0, eq_pos);
         string val = rest.substr(eq_pos + 1);
-
 
         if ((val.front() == '\'' && val.back() == '\'') || (val.front() == '"' && val.back() == '"')) {
             val = val.substr(1, val.size() - 2);
